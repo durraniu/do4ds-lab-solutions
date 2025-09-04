@@ -1,0 +1,17 @@
+.Rproj.user
+.Rhistory
+.RData
+.httr-oauth
+.DS_Store
+.quarto
+**/*.html
+**/data/
+
+# Virtual environments (at any level)
+**/.venv/
+**/venv/
+
+# R environments (at any level)
+**/renv/
+**/.Rproj.user/
+**/rv/

@@ -1,0 +1,21 @@
+[project]
+name = "lab3"
+r_version = "4.5"
+
+repositories = [
+    {alias = "PPM", url = "https://packagemanager.posit.co/cran/latest"},
+]
+
+dependencies = [
+    "DBI",
+    "duckdb",
+    "palmerpenguins",
+    "dplyr",
+    "ggplot2",
+    "dbplyr",
+    "knitr",
+    "rmarkdown",
+    "shiny",
+    "httr2",
+    "watcher"
+]
