@@ -5,6 +5,7 @@
 .DS_Store
 .quarto
 **/*.html
+**/*.Renviron
 **/data/
 
 # Virtual environments (at any level)

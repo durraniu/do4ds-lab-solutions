@@ -1,0 +1,74 @@
+from shiny import App, render, ui, reactive
+import requests
+import logging
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="SENTRY_KEY",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
+
+
+api_url = 'http://127.0.0.1:8080/predict'
+logging.basicConfig(
+    format='%(asctime)s - %(message)s',
+    level=logging.INFO
+)
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Penguin Mass Predictor"), 
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.input_slider("bill_length", "Bill Length (mm)", 30, 60, 45, step=0.1),
+            ui.input_select("sex", "Sex", ["Male", "Female"]),
+            ui.input_select("species", "Species", ["Adelie", "Chinstrap", "Gentoo"]),
+            ui.input_action_button("predict", "Predict")
+        ),
+        ui.h2("Penguin Parameters"),
+        ui.output_text_verbatim("vals_out"),
+        ui.h2("Predicted Penguin Mass (g)"), 
+        ui.output_text("pred_out")
+    )   
+)
+
+def server(input, output, session):
+    logging.info("App start")
+
+    @reactive.calc
+    def vals():
+        d = [{
+            "bill_length_mm": input.bill_length(),
+            "sex_male": input.sex() == "Male",
+            "species_Gentoo": input.species() == "Gentoo", 
+            "species_Chinstrap": input.species() == "Chinstrap"
+        }]
+        return d
+    
+    @reactive.calc
+    @reactive.event(input.predict)
+    def pred():
+        try:
+            logging.info("Request Made")
+            r = requests.post(api_url, json=vals())
+            r.raise_for_status()  # raise HTTPError if not 200
+            logging.info("Request Returned")
+            return r.json().get("predict")[0]
+        except Exception as e:
+            logging.error("Prediction failed", exc_info=True)
+            sentry_sdk.capture_exception(e)   # send to Sentry
+            return "Error: prediction failed"
+
+    @render.text
+    def vals_out():
+        return f"{vals()}"
+
+    @render.text
+    def pred_out():
+        result = pred()
+        if isinstance(result, str) and result.startswith("Error"):
+            return result
+        return f"{round(result)}"
+
+app = App(app_ui, server)
